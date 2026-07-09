@@ -1,0 +1,17 @@
+{
+  "Name": "PPG Multiplayer Project",
+  "Author": "Rxnk",
+  "Description": "Online co-op demo: shared room, live cursors, and shared spawning over a relay server.",
+  "ModVersion": "0.3",
+  "GameVersion": "1.27+",
+  "ThumbnailPath": "thumb.png",
+  "EntryPoint": "MPLoader.Boot",
+  "Tags": [],
+  "Scripts": [
+    "loader.cs"
+  ],
+  "Active": true,
+  "UGCIdentity": null,
+  "CreatorUGCIdentity": "3753069716",
+  "AssemblyName": null
+}

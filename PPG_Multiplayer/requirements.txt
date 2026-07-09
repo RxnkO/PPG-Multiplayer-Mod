@@ -1,0 +1,2 @@
+# PPG Multiplayer relay uses only the Python standard library — no packages needed.
+# This file exists so hosts (Railway/Render) auto-detect a Python app.

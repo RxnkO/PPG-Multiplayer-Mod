@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: ppg-multiplayer-relay
+    runtime: python
+    plan: free
+    startCommand: python relay_server.py
+    healthCheckPath: /
+    autoDeploy: true
