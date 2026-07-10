@@ -1,0 +1,75 @@
+========================================================================
+ STEAM WORKSHOP PAGE  (paste into the Description box - it's Steam BBCode)
+========================================================================
+
+[h1]PPG Multiplayer[/h1]
+
+[b]Play People Playground online with a friend.[/b] Share a 5-character room code and you're in the same sandbox together - see each other's cursors, spawn and build side by side, take control of each other's objects, and watch shots fly on both screens.
+
+No IP addresses, no port forwarding, no server to run. It connects through a hosted relay automatically, so it just works.
+
+[hr][/hr]
+
+[h1]Features[/h1]
+[list]
+[*][b]Room codes[/b] - host a room, share the code, your friend joins. That's it.
+[*][b]Live cursors[/b] - see each other's mouse move in real time, each player in their own color with their Steam name.
+[*][b]Shared spawning[/b] - anything you spawn from the catalog shows up on both screens.
+[*][b]Take control[/b] - left-click another player's object to grab it, throw it, and mess with it.
+[*][b]Shots sync[/b] - fire a gun and your friend sees the muzzle flash and tracer.
+[*][b]Share your whole build[/b] - one click streams everything already in your scene to whoever joins.
+[*][b]In-game chat[/b] - press Enter to chat with your friends, color-coded by player.
+[*][b]Live ping[/b] - see your latency to the server at a glance.
+[*][b]Solo self-test[/b] - a built-in test mode so you can check it works before a friend hops on.
+[*][b]Clean in-game UI[/b] - a proper panel on the main menu and in the sandbox (press M). No console commands.
+[/list]
+
+[hr][/hr]
+
+[h1]How To Use[/h1]
+
+[b]First-time setup (do this once):[/b]
+[olist]
+[*]Subscribe to the mod and make sure it's enabled in the mod list. Your friend does the same.
+[*]Open [b]Settings[/b] and turn [b]"Reject suspicious mods" OFF[/b]. The mod uses networking, so the game flags it - this is required.
+[*][b]Fully quit and reopen[/b] the game (the setting only applies after a restart).
+[*]If the mod tile shows "ERROR", click [b]Recompile[/b]. You should see "Multiplayer Mod Loaded!".
+[/olist]
+
+[b]Playing together:[/b]
+[olist]
+[*]Load any sandbox map. (The multiplayer menu wakes up once you've entered a map.)
+[*]Press [b]M[/b] for the multiplayer menu, or use the [b]multiplayer[/b] button on the main menu.
+[*]One of you clicks [b]HOST A NEW ROOM[/b] and gets a 5-character code. Click [b]Copy code[/b] and send it.
+[*]The other pastes the code into the Join box and clicks [b]JOIN[/b].
+[*]The status pill turns green - [b]Connected[/b] - and shows who's online. You're playing.
+[/olist]
+
+[b]In-game controls:[/b]
+[list]
+[*][b]M[/b] - show / hide the multiplayer menu
+[*][b]Enter[/b] - open chat (Enter again to send, Esc to cancel)
+[*][b]Left-click a friend's object[/b] - take control of it
+[*][b]Solo self-test[/b] button - try it alone; a ghost cursor and duplicated spawns appear beside you
+[/list]
+
+[b]Want to see your friend's existing creation?[/b] While hosting, click [b]"Share my whole scene"[/b] and everything already in your sandbox streams to them.
+
+[hr][/hr]
+
+[h1]Good To Know[/h1]
+[list]
+[*]The relay is on a free host that naps after a while, so the very first connection can take up to ~30 seconds to wake ("Connecting..." then connects). After that it's instant.
+[*]Ragdolls sync as one piece, so flailing limbs won't match exactly. Simple objects (crates, guns, swords, melons) sync cleanly.
+[*]Some visual effects (fire, glow, electricity) don't fully transfer yet. More sync is coming.
+[*]There's always a little network lag, so a friend's fast objects trail slightly behind yours.
+[/list]
+
+[hr][/hr]
+
+[h1]Found a bug?[/h1]
+[b]Leave a comment on this page describing what happened and I'll take a look.[/b] The more detail the better - what you were doing, what you expected, and what actually happened. Screenshots help a lot.
+
+[hr][/hr]
+
+[i]Made by Rxnk. Thanks for trying it - have fun.[/i]

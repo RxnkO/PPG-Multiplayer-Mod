@@ -78,6 +78,9 @@ def handle_sync(body):
         except Exception:
             pass
 
+    # nids this player is taking control of this tick (authority handoff)
+    claims_in = [str(c)[:48] for c in (body.get("claims") or [])[:MAX_OBJS] if c]
+
     with _lock:
         _gc()
         room = rooms.get(code)
@@ -85,8 +88,45 @@ def handle_sync(body):
             room = {"players": {}, "t": now}
             rooms[code] = room
         room["t"] = now
+        room.setdefault("claims", [])
+        for nid in claims_in:
+            room["claims"].append({"nid": nid, "owner": pid, "t": now})
+        # keep only recent claims so late/laggy owners still get the message
+        room["claims"] = [c for c in room["claims"] if now - c["t"] < 3.0]
+
+        # shots: projectiles fired this tick, each tagged with a unique id so
+        # every other player plays it exactly once (flash + tracer)
+        room.setdefault("shots", [])
+        room.setdefault("shot_seq", 0)
+        for s in (body.get("shots") or [])[:64]:
+            try:
+                room["shot_seq"] += 1
+                room["shots"].append({
+                    "id": room["shot_seq"], "owner": pid,
+                    "x": float(s.get("x", 0.0)), "y": float(s.get("y", 0.0)),
+                    "vx": float(s.get("vx", 0.0)), "vy": float(s.get("vy", 0.0)),
+                    "t": now,
+                })
+            except Exception:
+                pass
+        room["shots"] = [s for s in room["shots"] if now - s["t"] < 1.5]
+
+        # chat: text lines, each with a unique id so every other player shows
+        # it exactly once. Sender's own lines are filtered out of their response.
+        room.setdefault("chat", [])
+        room.setdefault("chat_seq", 0)
+        cname = str(body.get("name", "Player"))[:24]
+        for msg in (body.get("chats") or [])[:8]:
+            text = str(msg)[:200].strip()
+            if text:
+                room["chat_seq"] += 1
+                room["chat"].append({"id": room["chat_seq"], "owner": pid, "name": cname, "text": text, "t": now})
+        room["chat"] = [c for c in room["chat"] if now - c["t"] < 30.0]
+
         room["players"][pid] = {
             "name": str(body.get("name", "Player"))[:24],
+            "steam": str(body.get("steam", ""))[:20],
+            "grab": bool(body.get("grab", False)),
             "x": float(body.get("x", 0.0)),
             "y": float(body.get("y", 0.0)),
             "objs": objs_in,
@@ -111,6 +151,8 @@ def handle_sync(body):
             cursors.append({
                 "id": (opid + "_echo") if is_self else opid,
                 "name": p["name"] + suffix,
+                "steam": p.get("steam", ""),
+                "grab": p.get("grab", False),
                 "x": round(p["x"] + dx, 3), "y": round(p["y"], 3),
                 "age": round(now - p["t"], 2),
             })
@@ -121,7 +163,13 @@ def handle_sync(body):
                     "x": round(o["x"] + dx, 3), "y": round(o["y"], 3),
                     "rot": round(o["rot"], 1),
                 })
-        return {"now": round(now, 2), "cursors": cursors, "objs": objs}, 200
+        claims_out = [{"nid": c["nid"], "owner": c["owner"]} for c in room["claims"]]
+        shots_out = [{"id": s["id"], "x": s["x"], "y": s["y"], "vx": s["vx"], "vy": s["vy"]}
+                     for s in room["shots"] if s["owner"] != pid]
+        chat_out = [{"id": c["id"], "owner": c["owner"], "name": c["name"], "text": c["text"]}
+                    for c in room["chat"] if c["owner"] != pid]
+        return {"now": round(now, 2), "cursors": cursors, "objs": objs,
+                "claims": claims_out, "shots": shots_out, "chats": chat_out}, 200
 
 
 class Handler(BaseHTTPRequestHandler):

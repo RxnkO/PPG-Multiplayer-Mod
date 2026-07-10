@@ -29,7 +29,14 @@ suspicious mods" must be OFF** in game settings — for you and your friend.
 
 ---
 
-## Step 1 — Relay server online (one time)
+> ✅ **A permanent relay is already configured** as the default:
+> `https://ppg-multiplayer-mod.onrender.com`. Players don't need to run a server or
+> paste a URL — it just works on install. Steps 1–2 below are only if you ever want to
+> run your OWN relay instead. (Free-tier note: the server sleeps after ~15 min idle, so
+> the first connection after a nap takes ~30s — the pill shows "Connecting…" then
+> connects.)
+
+## Step 1 — Relay server online (one time, optional now)
 
 The relay (`relay_server.py`, pure Python) is what lets two PCs talk. Pick one:
 
@@ -107,6 +114,14 @@ The relay mirrors *you* back beside yourself: you'll see a **`(echo)` cursor** f
 your mouse ~3 m to the right, and anything you spawn gets **duplicated** next to it. If
 that ghost appears and moves in sync, the whole pipeline works. (It still needs a live
 relay URL — that's exactly what it's testing.)
+
+### Taking control of another player's object (experimental)
+
+Another player's objects normally show as frozen copies. **Left-click one to take
+control of it** - it unfreezes on your side, becomes yours, and the other player's copy
+turns into the frozen mirror. Now you can drag/throw it. Effects like fire and glow
+still don't transfer yet (only position/rotation/item are synced); that's the next
+piece. This needs the updated relay deployed (re-push to GitHub so Render redeploys).
 
 ### Loading the host's existing build
 

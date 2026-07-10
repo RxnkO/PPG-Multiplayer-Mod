@@ -1,0 +1,56 @@
+========================================================================
+ UPDATE LOG  (paste into Steam's "Change Notes" when you post an update,
+ or drop it at the bottom of the Description under an [h1]Update Log[/h1])
+========================================================================
+
+[h1]Update Log[/h1]
+
+[h2]v1.3 - Steam avatars + rock-solid joining[/h2]
+[list]
+[*][b]Steam profile pictures[/b] on player cursors, so you can tell at a glance who's who.
+[*][b]Joining hardened[/b] - players are now identified by their unique Steam ID, so two people can never be mistaken for one. If you ever had "we can't see each other" issues, this closes the door on them for good.
+[/list]
+
+[h2]v1.2 - Chat and polish[/h2]
+[list]
+[*][b]In-game text chat[/b] - press Enter to type, Enter again to send, Esc to cancel. Messages appear color-coded by player.
+[*][b]Live ping[/b] - your latency to the server now shows in the status bar.
+[*][b]Color-coded players[/b] - the player list matches each person's cursor color.
+[/list]
+
+[h2]v1.1 - Join fix (important)[/h2]
+[list]
+[*][b]Fixed the big one:[/b] players who joined the same room could only see themselves ("1 person" on both screens). Everyone was being given the same internal ID, so the server treated you all as one person. Player IDs and room codes are now properly unique.
+[*]If you had trouble connecting before, this is the fix - re-subscribe / update and try again.
+[*]Side effect: rooms now correctly support more than two people.
+[/list]
+
+[h2]v1.0 - First public release[/h2]
+[list]
+[*]Online co-op over a hosted relay - no IP, no port forwarding, no server to run.
+[*]Room-code system: host a room, share a 5-character code, friend joins.
+[*]Live player cursors with per-player colors and Steam names.
+[*]Shared spawning - whatever you spawn shows up on both screens.
+[*]Take control: left-click another player's object to grab and use it.
+[*]Shot sync: firing a gun shows a muzzle flash and tracer on the other end.
+[*]"Share my whole scene" to stream your existing build to anyone who joins.
+[*]Solo self-test mode so you can verify everything works without a friend.
+[*]In-game UI panel plus a main-menu multiplayer button.
+[/list]
+
+[h2]What's next (planned)[/h2]
+[list]
+[*]Syncing effects and state (fire, glow, electricity) so items look identical on both ends.
+[*]Smoother ragdoll syncing so limbs match, not just the body.
+[*]Steam profile pictures on player cursors.
+[/list]
+
+------------------------------------------------------------------------
+ TEMPLATE for future updates - copy this block each time you patch:
+------------------------------------------------------------------------
+[h2]vX.Y - short title[/h2]
+[list]
+[*]Added: ...
+[*]Fixed: ...
+[*]Changed: ...
+[/list]
