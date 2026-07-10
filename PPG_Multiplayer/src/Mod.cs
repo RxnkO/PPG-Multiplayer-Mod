@@ -42,7 +42,7 @@ namespace Mod
             }
             catch { }
 
-            try { ModAPI.Notify("Multiplayer Mod Loaded! (v1.4 - custom cursors)"); } catch { }
+            try { ModAPI.Notify("Multiplayer Mod Loaded! (v1.5 - stable)"); } catch { }
         }
     }
 
@@ -129,6 +129,8 @@ namespace Mod
         private string joinField = "";
         private string urlField = DEFAULT_RELAY_URL;
         private float lastPing = 0f;   // round-trip time to relay, ms
+        private float connectStart = 0f;   // when we began the current connect
+        private bool diagShown = false;
 
         // chat
         private bool chatActive = false;
@@ -198,16 +200,19 @@ namespace Mod
             HookSpawnEvent();
         }
 
-        // load the custom pointer / grab hand art shipped with the mod (P1..P4)
+        // load the custom pointer / grab hand art shipped with the mod (P1..P4).
+        // Retries (only fills the nulls) since ModAPI assets may not be ready the
+        // instant the mod boots.
         void LoadCursorSprites()
         {
-            if (cursorSpritesLoaded) return;
-            cursorSpritesLoaded = true;
+            int loaded = 0;
             for (int i = 0; i < 4; i++)
             {
-                try { pointerSprites[i] = ModAPI.LoadSprite("PointerP" + (i + 1) + "-256.png"); } catch { }
-                try { grabSprites[i] = ModAPI.LoadSprite("HandClosedP" + (i + 1) + "-256.png"); } catch { }
+                if (pointerSprites[i] == null) { try { pointerSprites[i] = ModAPI.LoadSprite("PointerP" + (i + 1) + "-256.png"); } catch { } }
+                if (grabSprites[i] == null) { try { grabSprites[i] = ModAPI.LoadSprite("HandClosedP" + (i + 1) + "-256.png"); } catch { } }
+                if (pointerSprites[i] != null) loaded++;
             }
+            cursorSpritesLoaded = loaded > 0;
         }
 
         string RandomName()
@@ -671,7 +676,16 @@ namespace Mod
         void StartSession(bool asHost)
         {
             hosting = asHost; connected = true;
-            everConnected = false; netFail = 0;
+            everConnected = false; netFail = 0; connectStart = Time.time;
+            LoadCursorSprites();
+            // one-time, quiet note only if an optional extra didn't load
+            if (!diagShown)
+            {
+                diagShown = true;
+                int nptr = 0; for (int i = 0; i < 4; i++) if (pointerSprites[i] != null) nptr++;
+                if (nptr < 4 || string.IsNullOrEmpty(mySteam))
+                    try { ModAPI.Notify("Note: custom cursors " + nptr + "/4, Steam " + (string.IsNullOrEmpty(mySteam) ? "not detected (using colored dots)" : "ok")); } catch { }
+            }
             if (syncRoutine != null) StopCoroutine(syncRoutine);
             syncRoutine = StartCoroutine(SyncLoop());
         }
@@ -728,7 +742,7 @@ namespace Mod
                 req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
                 req.downloadHandler = new DownloadHandlerBuffer();
                 req.SetRequestHeader("Content-Type", "application/json");
-                req.timeout = 8;
+                req.timeout = 15;
                 float t0 = Time.realtimeSinceStartup;
                 yield return req.SendWebRequest();
 
@@ -744,11 +758,23 @@ namespace Mod
                 else
                 {
                     netFail++;
-                    if (netFail == 3)
+                    if (!everConnected)
                     {
-                        lastError = "Can't reach the relay (" + (req.error == null ? "timeout" : req.error) + "). Check the URL is correct and the server is running.";
-                        state = ConnState.Failed; panelOpen = true;
-                        ModAPI.Notify("CANNOT REACH RELAY - " + (req.error == null ? "timeout" : req.error));
+                        // First connection. The free server sleeps when idle and can
+                        // take up to a minute to wake, so stay in "Connecting" and
+                        // keep retrying rather than crying failure right away.
+                        state = ConnState.Connecting;
+                        if (Time.time - connectStart > 70f)
+                        {
+                            state = ConnState.Failed; panelOpen = true;
+                            lastError = "Couldn't reach the server after a minute. Check your internet, and make sure you and your friend are on the latest version of the mod.";
+                        }
+                    }
+                    else if (netFail == 3)
+                    {
+                        // We were connected and dropped - keep trying quietly.
+                        state = ConnState.Failed;
+                        lastError = "Lost connection to the server. Reconnecting...";
                     }
                 }
                 req.Dispose();
@@ -1260,6 +1286,7 @@ namespace Mod
         {
             RemoteCursor rc;
             if (cursors.TryGetValue(id, out rc)) { if (rc.go != null) return rc; }
+            if (!cursorSpritesLoaded) LoadCursorSprites();   // retry until the art loads
             int idx = ColorIndex(id);
             Color col = PLAYER_COLORS[idx];
 
@@ -1469,20 +1496,32 @@ namespace Mod
 
         void DrawChat()
         {
-            // recent lines, bottom-left, fading out over time
-            float y = Screen.height - (chatActive ? 72f : 42f);
+            int fs = _statusStyle.fontSize + 3;
+            float lineH = fs + 10f;
+            // sit well above the game's bottom toolbar so it never overlaps it
+            float baseY = Screen.height - Mathf.Max(170f, Screen.height * 0.16f);
+
+            GUIStyle st = new GUIStyle(_statusStyle);
+            st.fontSize = fs; st.fontStyle = FontStyle.Bold; st.padding = new RectOffset(8, 8, 3, 3);
+
+            float y = chatActive ? baseY - lineH - 6f : baseY;
             for (int i = chatLog.Count - 1; i >= 0; i--)
             {
                 ChatLine cl = chatLog[i];
                 float age = Time.time - cl.time;
-                float a = age < 9f ? 1f : Mathf.Clamp01(1f - (age - 9f) / 2f);
+                float a = age < 10f ? 1f : Mathf.Clamp01(1f - (age - 10f) / 2f);
                 if (a <= 0.02f) continue;
-                GUIStyle st = new GUIStyle(_statusStyle);
-                st.fontStyle = FontStyle.Bold;
+                string line = cl.name + ": " + cl.text;
+                Vector2 sz = st.CalcSize(new GUIContent(line));
+                float wbox = Mathf.Min(sz.x + 4f, Screen.width * 0.55f);
+                // dark backing so it's readable over the scene
+                Color oc = GUI.color; GUI.color = new Color(0f, 0f, 0f, 0.55f * a);
+                GUI.DrawTexture(new Rect(12f, y, wbox, lineH), Texture2D.whiteTexture);
+                GUI.color = oc;
                 st.normal.textColor = new Color(cl.color.r, cl.color.g, cl.color.b, a);
-                GUI.Label(new Rect(14f, y, Screen.width * 0.5f, 24f), cl.name + ": " + cl.text, st);
-                y -= 24f;
-                if (y < 40f) break;
+                GUI.Label(new Rect(12f, y, wbox, lineH), line, st);
+                y -= lineH;
+                if (y < 60f) break;
             }
 
             if (chatActive)
@@ -1493,8 +1532,12 @@ namespace Mod
                     if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter) { SendChat(); e.Use(); }
                     else if (e.keyCode == KeyCode.Escape) { chatActive = false; chatInput = ""; e.Use(); }
                 }
+                Rect ir = new Rect(12f, baseY, Screen.width * 0.45f, lineH + 4f);
+                Color oc = GUI.color; GUI.color = new Color(0f, 0f, 0f, 0.8f);
+                GUI.DrawTexture(ir, Texture2D.whiteTexture); GUI.color = oc;
+                GUIStyle fld = new GUIStyle(_fieldStyle); fld.fontSize = fs;
                 GUI.SetNextControlName("ppgchat");
-                chatInput = GUI.TextField(new Rect(14f, Screen.height - 36f, Screen.width * 0.4f, 27f), chatInput ?? "", 200, _fieldStyle);
+                chatInput = GUI.TextField(ir, chatInput ?? "", 200, fld);
                 GUI.FocusControl("ppgchat");
             }
         }
@@ -1507,12 +1550,17 @@ namespace Mod
             else if (state == ConnState.Failed) { pc = new Color(1f, 0.4f, 0.4f); ptxt = "● Connection failed"; }
             else { pc = new Color(0.65f, 0.65f, 0.7f); ptxt = "● Multiplayer offline"; }
 
-            Rect r = new Rect(x, 10, w, 26);
+            // wide enough for the full line, and tall enough for the scaled font
+            float pw = Mathf.Clamp(Screen.width * 0.44f, 480f, 900f);
+            float ph = _statusStyle.fontSize + 18f;
+            Rect r = new Rect((Screen.width - pw) / 2f, 8f, pw, ph);
             Color old = GUI.color;
-            GUI.color = new Color(0f, 0f, 0f, 0.55f);
+            GUI.color = new Color(0f, 0f, 0f, 0.6f);
             GUI.DrawTexture(r, Texture2D.whiteTexture);
             GUI.color = old;
-            GUIStyle pill = new GUIStyle(_statusStyle); pill.fontStyle = FontStyle.Bold; pill.alignment = TextAnchor.MiddleCenter; pill.padding = new RectOffset(9, 9, 5, 5);
+            GUIStyle pill = new GUIStyle(_statusStyle);
+            pill.fontSize = _statusStyle.fontSize; pill.fontStyle = FontStyle.Bold;
+            pill.alignment = TextAnchor.MiddleCenter; pill.padding = new RectOffset(10, 10, 4, 4);
             pill.normal.textColor = pc; pill.hover.textColor = Color.white;
             if (GUI.Button(r, ptxt, pill)) panelOpen = !panelOpen;
         }
@@ -1550,8 +1598,10 @@ namespace Mod
             }
             else if (state == ConnState.Connecting)
             {
-                GUILayout.Label("Connecting to relay…", Colored(new Color(1f, 0.8f, 0.2f)));
+                GUILayout.Label("Connecting…", Colored(new Color(1f, 0.8f, 0.2f)));
                 GUILayout.Label("Room " + room, _statusStyle);
+                GUILayout.Space(4);
+                GUILayout.Label("If the server was asleep this can take up to a minute the first time. Hang tight.", _statusStyle);
                 GUILayout.Space(6);
                 if (GUILayout.Button("Cancel", _btnStyle)) Disconnect();
             }
