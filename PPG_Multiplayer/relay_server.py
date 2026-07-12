@@ -185,8 +185,22 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(payload)
 
     def do_GET(self):
+        # /debug shows exactly who the server thinks is in each room.
+        # This is how we prove whether two players actually reach the same room.
+        if self.path.startswith("/debug"):
+            with _lock:
+                _gc()
+                now = _now()
+                out = {}
+                for code, r in rooms.items():
+                    out[code] = [
+                        {"id": pid, "name": d.get("name", ""), "secs_ago": round(now - d["t"], 2)}
+                        for pid, d in r["players"].items()
+                    ]
+                self._send(200, {"version": "1.5", "room_count": len(rooms), "rooms": out})
+            return
         with _lock:
-            self._send(200, {"status": "ok", "rooms": len(rooms)})
+            self._send(200, {"status": "ok", "version": "1.5", "rooms": len(rooms)})
 
     def do_POST(self):
         if not self.path.startswith("/sync"):

@@ -1586,6 +1586,10 @@ namespace Mod
                 if (soloTest) GUILayout.Label("SOLO SELF-TEST active (echoing you back)", Colored(new Color(1f, 0.8f, 0.3f)));
                 GUILayout.Space(10);
 
+                // so two players can instantly confirm they're on the SAME server
+                GUILayout.Label("Server: " + ShortUrl(relayUrl), Colored(new Color(0.6f, 0.6f, 0.65f)));
+                GUILayout.Space(4);
+
                 GUILayout.Label("Players (" + (friendCount + 1) + ")", _statusStyle);
                 PlayerRow(myName + "   (you)", ColorForId(myId), mySteam);
                 foreach (KeyValuePair<string, string> kv in friendNames)
@@ -1640,6 +1644,13 @@ namespace Mod
             GUILayout.FlexibleSpace();
             GUILayout.Label(onMenu ? "Click \"multiplayer\" again to close" : "M = show / hide this menu", Colored(new Color(0.5f, 0.5f, 0.55f)));
             GUILayout.EndArea();
+        }
+
+        string ShortUrl(string u)
+        {
+            if (string.IsNullOrEmpty(u)) return "(none)";
+            string s = u.Replace("https://", "").Replace("http://", "").TrimEnd('/');
+            return s;
         }
 
         void PlayerRow(string name, Color dot, string steam)
